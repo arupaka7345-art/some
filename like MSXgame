@@ -1,0 +1,138 @@
+/*ゲームを作ってみたい。
+やりたいこと
+・コマンド制をやってみよう
+・コマンドは英語だけにしておく*/
+
+#include <stdio.h>
+#include <stdlib.h>
+
+FILE *fp;
+
+int d[32][18] = {0};//画面
+int I;//コマンド
+int X = 16, Y = 9;//座標
+int debug = 0;//デバッグ用
+int power = 1;
+char ROD[576];
+char raw[2];
+
+int UI();
+int COM();
+
+int main(void)
+{
+  fp = fopen(".map", "rb");
+	//fread(ROD, 1, 32, fp);
+	//printf("%s\n", ROD);
+
+	d[X][Y] = -1;
+
+	while(power)
+  {
+    UI();
+
+    if(debug != 0) printf("\nX=%d, Y=%d", X, Y);
+
+  	printf("\n入力:");
+	  scanf("%d", &I);
+
+  	d[X][Y] = 0;
+	  COM();
+	  X = X < 32 ? (-1 < X ? X : 31) : 0;
+	  Y = Y < 18 ? (-1 < Y ? Y : 17) : 0;
+	  d[X][Y] = -1;
+
+	  I = 0;
+  }
+  fclose(fp);
+
+	return 0;
+}
+
+int UI()
+{
+	for(int i = 0; i < 18; i++)
+	{
+		fread(ROD, 1, 16, fp);
+
+		if(i == 0)
+		{
+			for(int k = 0; k < 64; k++) printf("=");
+			printf("\n");
+		}
+
+		for(int k = 0; k < 32; k++)
+		{
+			raw[0] = ROD[k / 2] >> 4;
+			raw[1] = ROD[k / 2] % 16;
+
+			switch(d[k][i])
+			{
+				case 0:
+					printf(",,");
+				break;
+
+				case 1:
+					printf("私");
+				break;
+
+				case 2:
+					printf("[]");
+				break;
+			}
+		}
+		printf("\n");
+	}
+	for(int k = 0; k < 64; k++) printf("=");
+
+  return 0;
+}
+
+int COM()
+{
+	switch(I)
+	{
+		case -1:
+			if(debug == 0) debug = 1;
+			else debug = 0;
+		break;
+
+		case 0:
+			power = 0;
+		break;
+
+		case 5:
+		break;
+
+		case 8:
+			Y--;
+		break;
+
+		case 6:
+			X++;
+		break;
+
+		case 2:
+			Y++;
+		break;
+
+		case 4:
+			X--;
+		break;
+
+		case 9:
+		X = 0; Y = 0;
+		break;
+	}
+	return 0;
+}
+
+
+
+//メモ↓
+//マップ移動はバグ多そう。
+/* デ-タについて
+0.何もなし。",,"で表現。
+1.プレイヤー。"私"で仮置き（後々変えるかも）
+2.不可壊の壁。"[]"で表現。
+*/
