@@ -13,21 +13,21 @@ int I;//コマンド
 int X = 16, Y = 9;//座標
 int debug = 0;//デバッグ用
 int power = 1;
-char ROD[576];
+char ROD[288];
 char raw[2];
 
 int UI();
 int COM();
+int ML();
 
 int main(void)
 {
   fp = fopen(".map", "rb");
-	//fread(ROD, 1, 32, fp);
-	//printf("%s\n", ROD);
 
-	d[X][Y] = -1;
+  ML();
+  d[X][Y] = 1;
 
-	while(power)
+  while(power)
   {
     UI();
 
@@ -53,8 +53,6 @@ int UI()
 {
 	for(int i = 0; i < 18; i++)
 	{
-		fread(ROD, 1, 16, fp);
-
 		if(i == 0)
 		{
 			for(int k = 0; k < 64; k++) printf("=");
@@ -63,21 +61,18 @@ int UI()
 
 		for(int k = 0; k < 32; k++)
 		{
-			raw[0] = ROD[k / 2] >> 4;
-			raw[1] = ROD[k / 2] % 16;
-
-			switch(d[k][i])
+		    switch(d[i][k])
 			{
-				case 0:
+			    case 0:
 					printf(",,");
 				break;
 
 				case 1:
-					printf("私");
+				    printf("私");
 				break;
 
 				case 2:
-					printf("[]");
+				    printf("[]");
 				break;
 			}
 		}
@@ -127,6 +122,23 @@ int COM()
 	return 0;
 }
 
+int ML()
+{
+    for(int i = 0; i < 18; i++)
+    {
+        fread(ROD, 16, fp);
+        raw[0] = ROD >> 4;
+        raw[1] = ROD % 16;
+
+        for(int k = 0; k < 32; k += 2)
+        {
+            d[k][i] = atoi(raw[0]);
+            d[k + 1][i] = atoi(raw[1]);
+        }
+    }
+    return 0;
+}
+
 
 
 //メモ↓
@@ -136,3 +148,5 @@ int COM()
 1.プレイヤー。"私"で仮置き（後々変えるかも）
 2.不可壊の壁。"[]"で表現。
 */
+/*マップの描画方法に関して
+dに読み込んだバイナリぶち込んだほうがいいかも*/
