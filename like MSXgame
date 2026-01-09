@@ -5,89 +5,156 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <conio.h>
+#include <windows.h>
+#include <time.h>
 
 FILE *fp;
 
+typedef struct
+{
+	int x;
+	int y;
+	int in;
+
+} NPC;
+
 int d[32][18] = {0};//画面
-int I;//コマンド
+int I = 5;//コマンド
 int X = 16, Y = 9;//座標
 int debug = 0;//デバッグ用
 int power = 1;
-char ROD[288];
-char raw[2];
+char raw[16];
+char timer = 0;
 
 int UI();
 int COM();
 int ML();
+int go();
+int NCO(NPC *);
 
 int main(void)
 {
-  fp = fopen(".map", "rb");
+	NPC n1;
+	n1.x = 15;
+	n1.y = 9;
 
-  ML();
-  d[X][Y] = 1;
+	NPC n2;
+	n2.x = 14;
+	n2.y = 9;
 
-  while(power)
-  {
-    UI();
+	fp = fopen(".map", "rb");
 
-    if(debug != 0) printf("\nX=%d, Y=%d", X, Y);
+	ML();
+	d[X][Y] = 1;
 
-  	printf("\n入力:");
-	  scanf("%d", &I);
+	while(power)
+	{
+		go();
+		UI();
 
-  	d[X][Y] = 0;
-	  COM();
-	  X = X < 32 ? (-1 < X ? X : 31) : 0;
-	  Y = Y < 18 ? (-1 < Y ? Y : 17) : 0;
-	  d[X][Y] = -1;
+		if(debug != 0) printf("\nX=%2d, Y=%2d", X, Y); else printf("\n          ");
 
-	  I = 0;
-  }
-  fclose(fp);
+		//scanf("%d", &I);
+		if(_kbhit()) I = _getch() - '0';
+
+		d[n1.x][n1.y] = 0;
+		NCO(&n1);
+		if(d[n1.x][n1.y] != 2)
+		{
+			n1.x = n1.x < 32 ? (-1 < n1.x ? n1.x : 31) : 0;
+			n1.y = n1.y < 18 ? (-1 < n1.y ? n1.y : 17) : 0;
+			d[n1.x][n1.y] = 3;
+		}
+		else
+		{
+			d[n1.x][n1.y] == 2;
+			n1.in = n1.in == 2 ? 8 : (n1.in == 4 ? 6 : (n1.in == 6 ? 4 : 2));
+			NCO(&n1);
+			d[n1.x][n1.y] = 3;
+		}
+
+		d[n2.x][n2.y] = 0;
+		NCO(&n2);
+		if(d[n2.x][n2.y] != 2)
+		{
+			n2.x = n2.x < 32 ? (-1 < n2.x ? n2.x : 31) : 0;
+			n2.y = n2.y < 18 ? (-1 < n2.y ? n2.y : 17) : 0;
+			d[n2.x][n2.y] = 3;
+		}
+		else
+		{
+			d[n2.x][n2.y] == 2;
+			n2.in = n2.in == 2 ? 8 : (n2.in == 4 ? 6 : (n2.in == 6 ? 4 : 2));
+			NCO(&n2);
+			d[n2.x][n2.y] = 3;
+		}
+
+		d[X][Y] = 0;
+		COM();
+		if(d[X][Y] != 2)
+		{
+			X = X < 32 ? (-1 < X ? X : 31) : 0;
+			Y = Y < 18 ? (-1 < Y ? Y : 17) : 0;
+			d[X][Y] = 1;
+		}
+		else
+		{
+			d[X][Y] == 2;
+			I = I == 2 ? 8 : (I == 4 ? 6 : (I == 6 ? 4 : 2));
+			COM();
+			d[X][Y] = 1;
+		}
+
+		I = 5;
+		timer++;
+	}
+	fclose(fp);
 
 	return 0;
 }
 
+
+
+
+
 int UI()
 {
+	
+	char buffer[2048] = ""; 
+	char line[128];
+
+	strcat(buffer, "================================================================\n");
+
 	for(int i = 0; i < 18; i++)
 	{
-		if(i == 0)
-		{
-			for(int k = 0; k < 64; k++) printf("=");
-			printf("\n");
-		}
-
+		line[0] = '\0';
 		for(int k = 0; k < 32; k++)
 		{
-		    switch(d[i][k])
+			switch(d[k][i])
 			{
-			    case 0:
-					printf(",,");
-				break;
-
-				case 1:
-				    printf("私");
-				break;
-
-				case 2:
-				    printf("[]");
-				break;
+				case 0: strcat(line, ",,"); break;
+				case 1: strcat(line, "@@"); break;
+				case 2: strcat(line, "[]"); break;
+				case 3: strcat(line, "##"); break;
 			}
 		}
-		printf("\n");
+		strcat(line, "\n");
+		strcat(buffer, line);
 	}
-	for(int k = 0; k < 64; k++) printf("=");
 
-  return 0;
+	strcat(buffer, "================================================================");
+
+	printf("%s", buffer);
+	return 0;
 }
 
 int COM()
 {
 	switch(I)
 	{
-		case -1:
+		case 9:
 			if(debug == 0) debug = 1;
 			else debug = 0;
 		break;
@@ -114,29 +181,67 @@ int COM()
 		case 4:
 			X--;
 		break;
-
-		case 9:
-		X = 0; Y = 0;
-		break;
 	}
 	return 0;
 }
 
 int ML()
 {
-    for(int i = 0; i < 18; i++)
-    {
-        fread(ROD, 16, fp);
-        raw[0] = ROD >> 4;
-        raw[1] = ROD % 16;
+	for(int i = 0; i < 18; i++)
+	{
+		fread(raw, 1, 16, fp);
 
-        for(int k = 0; k < 32; k += 2)
-        {
-            d[k][i] = atoi(raw[0]);
-            d[k + 1][i] = atoi(raw[1]);
-        }
-    }
-    return 0;
+		for(int k = 0; k < 32; k += 2)
+		{
+			d[k][i] = raw[k / 2] >> 4;
+			d[k + 1][i] = raw[k / 2] % 16;
+		}
+	}
+	return 0;
+}
+
+int go()
+{
+	COORD coord;
+	coord.X = 0;
+	coord.Y = 0;
+	SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), coord);
+
+	return 0;
+}
+
+int NCO(NPC *npc1)
+{
+	srand((unsigned long int)time(NULL) * (2 << 15));
+
+	npc1->in = rand() % 5;
+
+	if(timer == 0)
+	{
+		switch(npc1->in)
+		{
+			case 0:
+			break;
+
+			case 1:
+				npc1->y -= 1;
+			break;
+
+			case 2:
+				npc1->x += 1;
+			break;
+
+			case 3:
+				npc1->y += 1;
+			break;
+
+			case 4:
+				npc1->x -= 1;
+			break;
+		}
+	}
+
+	return 0;
 }
 
 
@@ -147,6 +252,5 @@ int ML()
 0.何もなし。",,"で表現。
 1.プレイヤー。"私"で仮置き（後々変えるかも）
 2.不可壊の壁。"[]"で表現。
+3.NPC。ゆーても現状は疑似乱数で動かすくらい。上書きして抹消可能。<==いつか作る
 */
-/*マップの描画方法に関して
-dに読み込んだバイナリぶち込んだほうがいいかも*/
