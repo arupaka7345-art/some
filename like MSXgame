@@ -8,7 +8,11 @@
 #include <string.h>
 #include <conio.h>
 #include <windows.h>
+#include <wbemidl.h>
+#include <wincrypt.h>
 #include <time.h>
+
+#pragma comment(lib, "wbemuuid.lib")
 
 FILE *fp;
 
@@ -33,16 +37,16 @@ int COM();
 int ML();
 int go();
 int NCO(NPC *);
+long GCT();
+unsigned int RNG();
 
 int main(void)
 {
+	system("cls");
+
 	NPC n1;
 	n1.x = 15;
 	n1.y = 9;
-
-	NPC n2;
-	n2.x = 14;
-	n2.y = 9;
 
 	fp = fopen(".map", "rb");
 
@@ -54,7 +58,7 @@ int main(void)
 		go();
 		UI();
 
-		if(debug != 0) printf("\nX=%2d, Y=%2d", X, Y); else printf("\n          ");
+		if(debug != 0) printf("\nX=%2d, Y=%2d\nnpc.x=%2d, npc.y=%2d", X, Y, n1.x, n1.y); else printf("\n          \n                ");
 
 		//scanf("%d", &I);
 		if(_kbhit()) I = _getch() - '0';
@@ -63,8 +67,8 @@ int main(void)
 		NCO(&n1);
 		if(d[n1.x][n1.y] != 2)
 		{
-			n1.x = n1.x < 32 ? (-1 < n1.x ? n1.x : 31) : 0;
-			n1.y = n1.y < 18 ? (-1 < n1.y ? n1.y : 17) : 0;
+			n1.x = n1.x < 31 ? (0 < n1.x ? n1.x : 30) : 1;
+			n1.y = n1.y < 17 ? (0 < n1.y ? n1.y : 16) : 1;
 			d[n1.x][n1.y] = 3;
 		}
 		else
@@ -75,28 +79,13 @@ int main(void)
 			d[n1.x][n1.y] = 3;
 		}
 
-		d[n2.x][n2.y] = 0;
-		NCO(&n2);
-		if(d[n2.x][n2.y] != 2)
-		{
-			n2.x = n2.x < 32 ? (-1 < n2.x ? n2.x : 31) : 0;
-			n2.y = n2.y < 18 ? (-1 < n2.y ? n2.y : 17) : 0;
-			d[n2.x][n2.y] = 3;
-		}
-		else
-		{
-			d[n2.x][n2.y] == 2;
-			n2.in = n2.in == 2 ? 8 : (n2.in == 4 ? 6 : (n2.in == 6 ? 4 : 2));
-			NCO(&n2);
-			d[n2.x][n2.y] = 3;
-		}
 
 		d[X][Y] = 0;
 		COM();
 		if(d[X][Y] != 2)
 		{
-			X = X < 32 ? (-1 < X ? X : 31) : 0;
-			Y = Y < 18 ? (-1 < Y ? Y : 17) : 0;
+			X = X < 31 ? (0 < X ? X : 30) : 1;
+			Y = Y < 17 ? (0 < Y ? Y : 16) : 1;
 			d[X][Y] = 1;
 		}
 		else
@@ -114,8 +103,6 @@ int main(void)
 
 	return 0;
 }
-
-
 
 
 
@@ -214,7 +201,7 @@ int NCO(NPC *npc1)
 {
 	srand((unsigned long int)time(NULL) * (2 << 15));
 
-	npc1->in = rand() % 5;
+	npc1->in = RNG() % 5;
 
 	if(timer == 0)
 	{
@@ -245,6 +232,70 @@ int NCO(NPC *npc1)
 }
 
 
+long GCT()
+{
+	HRESULT hr;
+	IWbemLocator *pLoc = NULL;
+	IWbemServices *oSvc = NULL;
+	IEnumWbemClassObject *pEnum = NULL;
+	IWbemClassObject *pclsObj = NULL;
+	ULONG uret = 0;
+	long tmp = 0;
+
+	CoInitializeEx(0, COINIT_MULTITHREADED);
+	COInitializeSecurity(NULL, -1, NULL, NULL, RPC_C_AUTHN_LEVEL_DEFAULT, RPC_C_IMP_LEVEL_IMPRESONATE, NULL, EOAC_NONE, NULL);
+
+	hr = COCreateInstance(&CLSID_WbemLocator,　0, CLSCTX_INPROC_SERVER, &IID_IWbemLocator, (LPVOID *)&pLoc);
+	if(FAILED(hr)) return 0;
+
+	hr = pLoc->lpVtbl->ConnectServer(pLoc, SysAllocString(L"ROOT\\WMI"), NULL, NULL, 0, NULL, 0, 0, &pSvc);
+	if(FAILED(hr)) return 0;
+
+	hr = pSvc->lpVtbl->ExeQuery(pSvc, SysAllocString(L"WQL"),
+	SysAllocString(L"SLECT CurrentTemperature FROM MSAcpi_ThermalZoneTemperature"),
+	WBEM_FLAG_FORWAD_ONLY | WBEM_FLAG_RETURN_IMMEDIATELY,
+	NULL, &pEnum);
+	if(pEnum)
+	{
+		hr = pEnum->lpVtbl->Next(pEnum, WBEM_INFINITE, 1, &pclsObj, &uret);
+
+		if(uret != 0)
+		{
+			VARIANT vtProp;
+			pclsObj->lpVtbl->Get(pclsObj, L"CurrentTemperature", 0, &vtProp, 0, 0);
+			tmp = vtProp.lVal;
+			VariantClrear(&vtProp);
+			pclsObj->lpVtbl->Release(pclsObj);
+		}
+		pEnum->lpVtbl->Release(pEnum);
+	}
+
+	pSvc->lpVtbl->Release(pSvc);
+	pLoc->lpVtbl->Release(pLoc);
+	
+	return tmp;
+}
+
+unsigned int RNG()
+{
+	HCRYPTPROV h;
+	unsigned int v;
+
+	CryptAcquireContext(&h, NULL, NULL, PROV_RSA_FULL, CRYPT_VERIFCONTEXT);
+	CryptGenRandom(h, sizeof(unsigned int), (BYTE *)&v);
+
+	for(int i = 0; i < 5; i++)
+	{
+		long tmp = GCT();
+		v ^= (unsigned int)(tmp << (i * 4));
+		Sleep(10);
+	}
+
+
+	CryptReleaseContext(h, 0);
+
+	return v;
+}
 
 //メモ↓
 //マップ移動はバグ多そう。
