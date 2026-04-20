@@ -1,7 +1,7 @@
 /*ゲームを作ってみたい。
 やりたいこと
-・コマンド制をやってみよう
-・コマンドは英語だけにしておく*/
+・コマンド制をやってみよう*/
+//やること：マップ制作。気が向いたら新しいNPCなんかも作るかも。
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -9,6 +9,7 @@
 #include <conio.h>
 #include <windows.h>
 #include <time.h>
+#include <math.h>
 
 FILE *fp;
 
@@ -16,65 +17,118 @@ typedef struct
 {
 	int x;
 	int y;
+	int type;
 	int in;
-
+	int nf;
 } NPC;
 
 int d[32][18] = {0};//画面
+char map[6] = "0.map";
 int I = 5;//コマンド
 int X = 16, Y = 9;//座標
 int debug = 0;//デバッグ用
 int power = 1;
 char raw[16];
 int timer = 0;
+int ncn = 0;
+NPC *npc = NULL;
 
 int UI();
 int COM();
 int ML();
 int go();
-int NCO(NPC *);
+int NC(int);
+int NRM(int);
+int NCO(int);
 
 int main(void)
 {
 	system("cls");
 
-	NPC n1;
-	n1.x = 15;
-	n1.y = 9;
-
-	fp = fopen(".map", "rb");
+	fp = fopen(map, "rb");
 
 	ML();
 	d[X][Y] = 1;
+	srand((unsigned long int)time(NULL));
 
 	while(power)
 	{
 		go();
 		UI();
 
-		if(debug != 0) printf("\nX=%2d, Y=%2d\nnpc.x=%2d, npc.y=%2d", X, Y, n1.x, n1.y); else printf("\n          \n                ");
+		if(debug != 0) printf("\nX=%2d, Y=%2d, NPC=%2d", X, Y, ncn);
+		else printf("\n                  ");
 
 		if(_kbhit()) I = _getch() - '0';
-
-		d[n1.x][n1.y] = 0;
-		NCO(&n1);
-		if(d[n1.x][n1.y] != 2)
+ 
+		for(int i = 0; i < ncn; i++)
 		{
-			n1.x = n1.x < 32 ? (-1 < n1.x ? n1.x : 31) : 0;
-			n1.y = n1.y < 18 ? (-1 < n1.y ? n1.y : 17) : 0;
-			d[n1.x][n1.y] = 3;
-		}
-		else
-		{
-			d[n1.x][n1.y] == 2;
-			n1.in = n1.in == 2 ? 8 : (n1.in == 4 ? 6 : (n1.in == 6 ? 4 : 2));
-			NCO(&n1);
-			d[n1.x][n1.y] = 3;
-		}
+			NC(i);
+			if(npc[i].nf)
+			{
+				d[npc[i].x][npc[i].y] = 0;
+				NRM(i);
+				if(timer >= 1200) NCO(i);
 
+				if(d[npc[i].x][npc[i].y] == 2 || d[npc[i].x][npc[i].y] == 4)
+				{
+					d[npc[i].x][npc[i].y] = d[npc[i].x][npc[i].y] == 2 ? 2 : 4;
+					npc[i].in = npc[i].in == 3 ? 1 : (npc[i].in == 4 ? 2 : (npc[i].in == 1 ?  3: 4));
+					NCO(i);
+					d[npc[i].x][npc[i].y] = 3;
+				}
+				else
+				{
+					npc[i].x = npc[i].x < 32 ? (-1 < npc[i].x ? npc[i].x : 31) : 0;
+					npc[i].y = npc[i].y < 18 ? (-1 < npc[i].y ? npc[i].y : 17) : 0;
+					d[npc[i].x][npc[i].y] = 3;
+				}
+			}
+		}
+		if(timer >= 1200) timer = 0;
 
 		d[X][Y] = 0;
 		COM();
+
+		if(d[X][Y] == 4)
+		{
+			int EX, EY, ET;
+
+			fseek(fp, 288, SEEK_SET);
+			while(1)
+			{
+				EX = fgetc(fp);
+				EY = fgetc(fp);
+				if(EX == X && EY == Y)
+				{
+					ET= fgetc(fp);
+					break;
+				}
+				else while(1)
+				{
+					EX = fgetc(fp);
+					if(EX == 254) break;
+				}
+				if(EX == 255 && EX == 253) break;
+			}
+
+			switch(ET)
+			{
+				default:
+				break;
+
+				case 1://マップ移動できた。
+					X = X <= 30 ? (1 <= X ? X : 30) : 1;
+					Y = Y <= 16 ? (1 <= Y ? Y : 16) : 1;
+					d[X][Y] = 1;
+					map[0] = fgetc(fp) + '0';
+					fclose(fp);
+					fp = fopen(map, "rb");
+					ML();
+				break;
+			}
+		}
+
 		if(d[X][Y] != 2)
 		{
 			X = X < 32 ? (-1 < X ? X : 31) : 0;
@@ -118,6 +172,7 @@ int UI()
 				case 1: strcat(line, "@@"); break;
 				case 2: strcat(line, "[]"); break;
 				case 3: strcat(line, "##"); break;
+				case 4: strcat(line, "!!"); break;
 			}
 		}
 		strcat(line, "\n");
@@ -167,6 +222,13 @@ int COM()
 
 int ML()
 {
+	if(npc != NULL)
+	{
+		free(npc);
+		npc = NULL;
+	}
+
+	fseek(fp, 0, SEEK_SET);
 	for(int i = 0; i < 18; i++)
 	{
 		fread(raw, 1, 16, fp);
@@ -177,6 +239,34 @@ int ML()
 			d[k + 1][i] = raw[k / 2] % 16;
 		}
 	}
+
+	ncn = 0;
+	int c;
+	fseek(fp, 0, SEEK_SET);
+	while((c = fgetc(fp)) != 253 && c != 255 && c != EOF);
+
+	long ds = 0;
+	if((unsigned char)c == 253)
+	{
+		ds = ftell(fp); 
+
+		while((c = fgetc(fp)) != 255 && c != EOF) if(c == 254) ncn++;
+	}
+
+	npc = (NPC *)malloc(sizeof(NPC) * (ncn > 0 ? ncn : 1));
+
+	fseek(fp, ds, SEEK_SET);
+	for(int i = 0; i < ncn; i++)
+	{
+		npc[i].x = fgetc(fp);
+		npc[i].y = fgetc(fp);
+		npc[i].type = fgetc(fp);
+		fgetc(fp);
+		npc[i].in = 0;
+		npc[i].nf = 1;
+		d[npc[i].x][npc[i].y] = 3;
+	}
+
 	return 0;
 }
 
@@ -190,36 +280,77 @@ int go()
 	return 0;
 }
 
-int NCO(NPC *npc1)
+int NC(int i)
 {
-	srand((unsigned long int)time(NULL));
+	if(npc[i].x == X && npc[i].y == Y) npc[i].nf = 0;
 
-	npc1->in = rand() % 5;
+	return 0;	
+}
 
-	if(timer == rand() % 10000)
+int NRM(int i)
+{
+	npc[i].in = rand() % 5;
+
+	return 0;
+}
+
+int NCO(int i)
+{
+	int Nx = npc[i].x, Ny = npc[i].y;
+	
+	if(fabs(npc[i].x - X) <= 3 && fabs(npc[i].y - Y) <= 3)
 	{
-		switch(npc1->in)
+//相対座標を出していろいろやる。
+		if(fabs(npc[i].x - X) <= fabs(npc[i].y - Y))
 		{
-			case 0:
-			break;
-
-			case 1:
-				npc1->y -= 1;
-			break;
-
-			case 2:
-				npc1->x += 1;
-			break;
-
-			case 3:
-				npc1->y += 1;
-			break;
-
-			case 4:
-				npc1->x -= 1;
-			break;
+			if(npc[i].y - Y < 0)
+			{
+				npc[i].in = 1;//up
+			}
+			else
+			{
+				npc[i].in = 3;//down
+			}
 		}
-		timer = 0;
+		else
+		{
+			if(npc[i].x - X < 0)
+			{
+				npc[i].in = 4;//left
+			}
+			else
+			{
+				npc[i].in = 2;//right
+			}
+		}
+	}
+
+	switch(npc[i].in)
+	{
+		case 0:
+		break;
+
+		case 1:
+			npc[i].y -= 1;//上
+		break;
+
+		case 2:
+			npc[i].x += 1;//右
+		break;
+
+		case 3:
+			npc[i].y += 1;//下
+		break;
+
+		case 4:
+			npc[i].x -= 1;//左
+		break;
+	}
+
+	if(fabs(npc[i].x - X) <= 3 && fabs(npc[i].y - Y) <= 3 && (d[npc[i].x][npc[i].y] == 2 || d[npc[i].x][npc[i].y] == 4))
+	{
+		npc[i].x = Nx;
+		npc[i].y = Ny;
 	}
 
 	return 0;
@@ -229,10 +360,38 @@ int NCO(NPC *npc1)
 
 
 //メモ↓
+//コンパイルは実行ファイルが先。忘れんな。
 //マップ移動はバグ多そう。
+/*
+マップファイルについて
+000～110　マップタイルの設定。
+120～??? イベントタイルの設定。（[X座標]　[Y座標]　[イベントタイプ]）
+???～???　NPCの設定。
+
+設定に関して
+FF　EOF
+FE　設定終わり。次の設定に。
+FD　区分けの切り替わり。イベントタイルの設定からNPCの設定に移るときとかに使う。
+
+イベントタイプ
+00 NULL
+01 マップ移動。[マップID]
+*/
+/*
+マップ移動について
+
+イベントタイルを用意する。
+踏んだら移動（イベント発火）させる。
+どういうイベントを発生させるかはマップファイル依存のほうがよさげかも。
+
+*/
+/* NPCについて
+0.愛称はアライグマ。プレイヤーから逃げるタイプ。
+*/
 /* デ-タについて
 0.何もなし。",,"で表現。
-1.プレイヤー。"私"で仮置き（後々変えるかも）
+1.プレイヤー。"@@"で表現
 2.不可壊の壁。"[]"で表現。
-3.NPC。ゆーても現状は疑似乱数で動かすくらい。上書きして抹消可能。<==いつか作る
+3.NPC。ゆーても現状は疑似乱数で動かすくらい。上書きして抹消可能。"##"で表現。
+4.イベント。"!!"デバッグ用に変えてる。
 */
