@@ -102,9 +102,6 @@ int fnew(ctrl *con)
     while(fgetc(fp) != EOF)
         fseek(fp, ++con->l * 28L, SEEK_SET);
     
-    fseek(fp, 0, SEEK_END);
-    con->cap = ftell(fp);
-    
     fclose(fp);
 
     return 0;
