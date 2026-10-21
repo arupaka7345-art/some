@@ -20,7 +20,6 @@ typedef struct
     greade rec;      // 成績
 
     int l;           // 長さ（行数）
-    int cap;         // データ量
 
     int in;          // 入力
 
