@@ -34,7 +34,7 @@ int menu(void);     　// コマンド表示と入力
 int show(ctrl);       // レコード表示
 int add(ctrl *);      // 引数未定 追加
 int renew(ctrl);      // 引数未定 更新...updateでは
-int del(void);       // 引数未定 削除 置き換え（notリユース）
+int del(ctrl);       // 引数未定 削除 置き換え（notリユース）
 
 //////////////////////////////////////////////////////////////////////
 
@@ -64,7 +64,7 @@ int main(void)
                 break;
 
             case 4:
-                del();
+                del(com);
                 break;
             
             case 9:  
