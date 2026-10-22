@@ -23,10 +23,10 @@ typedef struct
 int fnew(ctrl *);     // 新規作成
 
 int menu(void);     　// コマンド表示と入力
-int show(ctrl);       // レコード表示
+int show(ctrl *);     // レコード表示
 int add(ctrl *);      // 追加
 int renew(ctrl *);    // 更新
-int del(ctrl *);        // 削除（notリユース）
+int del(ctrl *);      // 削除（notリユース）
 
 int main(void)
 {
@@ -109,7 +109,7 @@ int menu(void)
     return id;
 }
 
-int show(ctrl con)
+int show(ctrl *con)
 {
     FILE *fp = fopen("seiseki.txt", "r");
 
@@ -118,13 +118,13 @@ int show(ctrl con)
         printf("[ERROR]: ファイルを開けません\n");
         return 1;
     } printf("\n");
-    for(int i = 0; i < con.l; i++)
+    for(int i = 0; i < con->l; i++)
     {
         fseek(fp, i * 28L, SEEK_SET);
-        fscanf(fp, "%d %s %d", &con.rec.no, con.rec.namae, &con.rec.tensu);
+        fscanf(fp, "%d %s %d", &con->rec.no, con->rec.namae, &con->rec.tensu);
 
-        if(strcmp("[DELETED]", con.rec.namae))
-            printf("%d %s %d\n", con.rec.no, con.rec.namae, con.rec.tensu);
+        if(strcmp("[DELETED]", con->rec.namae))
+            printf("%d %s %d\n", con->rec.no, con->rec.namae, con->rec.tensu);
     } fclose(fp);
 
     return 0;
