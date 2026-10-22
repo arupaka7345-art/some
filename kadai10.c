@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+////////////////////////////////////////
+
 typedef struct
 {
     int no;
@@ -17,6 +19,8 @@ typedef struct
     int pwr;
 } ctrl;
 
+////////////////////////////////////////
+
 int fnew(ctrl *);
 
 int menu(void);
@@ -24,6 +28,8 @@ int show(ctrl *);
 int add(ctrl *);
 int renew(ctrl *);
 int del(ctrl *);
+
+////////////////////////////////////////
 
 int main(void)
 {
@@ -69,6 +75,8 @@ int main(void)
     return 0;
 }
 
+////////////////////////////////////////
+
 int fnew(ctrl *con)
 {
     FILE *fp = fopen("seiseki.txt", "r");
@@ -88,6 +96,8 @@ int fnew(ctrl *con)
 
     return 0;
 }
+
+////////////////////////////////////////
 
 int menu(void)
 {
@@ -192,4 +202,5 @@ int del(ctrl *con)
     fclose(fp);
 
     return 0;
+
 }
