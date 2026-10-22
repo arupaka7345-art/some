@@ -173,15 +173,13 @@ int renew(ctrl *con)
     {
         printf("[ERROR]: 無効な番号\n");
         return 2;
-    } else
-    {
-        printf("[System]: 新しいデータ([name] [score]) -> ");
-        scanf("%s %d", con->rec.namae, &con->rec.tensu);
+    } printf("[System]: 新しいデータ([name] [score]) -> ");
+    scanf("%s %d", con->rec.namae, &con->rec.tensu);
 
-        fseek(fp, (con.rec.no - 1) * 28L, SEEK_SET);
-        
-        fprintf(fp, "%3d%20s%4d\n", con->rec.no, con->rec.namae, con->rec.tensu);
-    } fclose(fp);
+    fseek(fp, (con.rec.no - 1) * 28L, SEEK_SET);
+    fprintf(fp, "%3d%20s%4d\n", con->rec.no, con->rec.namae, con->rec.tensu);
+    
+    fclose(fp);
     
     return 0;
 }
