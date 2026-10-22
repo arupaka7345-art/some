@@ -33,7 +33,7 @@ int fnew(ctrl *);     // 新規作成
 int menu(void);     　// コマンド表示と入力
 int show(ctrl);       // レコード表示
 int add(ctrl *);      // 引数未定 追加
-int renew(ctrl);      // 引数未定 更新...updateでは
+int renew(ctrl *);      // 引数未定 更新...updateでは
 int del(ctrl);       // 引数未定 削除 置き換え（notリユース）
 
 //////////////////////////////////////////////////////////////////////
@@ -165,7 +165,7 @@ int add(ctrl *con)
     return 0;
 }
 
-int renew(ctrl con)
+int renew(ctrl *con)
 {
     FILE *fp = fopen("seiseki.txt", "r+");
 
@@ -174,20 +174,20 @@ int renew(ctrl con)
         printf("[ERROR]: ファイルを開けません\n");
         return 1;
     } printf("[System]: レコード番号 -> ");
-    scanf("%d", &con.rec.no);
+    scanf("%d", &con->rec.no);
 
-    if(con.rec.no > con.l)
+    if(con->rec.no > con->l)
     {
         printf("[ERROR]: 無効な番号\n");
         return 2;
     } else
     {
         printf("[System]: 新しいデータ([name] [score]) -> ");
-        scanf("%s %d", con.rec.namae, &con.rec.tensu);
+        scanf("%s %d", con->rec.namae, &con->rec.tensu);
 
         fseek(fp, (con.rec.no - 1) * 28L, SEEK_SET);
         
-        fprintf(fp, "%3d%20s%4d\n", con.rec.no, con.rec.namae, con.rec.tensu);
+        fprintf(fp, "%3d%20s%4d\n", con->rec.no, con->rec.namae, con->rec.tensu);
     } fclose(fp);
     
     return 0;
