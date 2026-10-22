@@ -1,12 +1,8 @@
-/* 　　             とりあえず基礎的な部分だけ実装してみた  　　            */
-//////////////////////////////////////////////////////////////////////
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 //////////////////////////////////////////////////////////////////////
-                     // さらに構造体増えるやろなぁ
 
 typedef struct
 {
@@ -17,13 +13,13 @@ typedef struct
 
 typedef struct
 {
-    greade rec;      // 成績
+    greade rec;       // 成績
 
-    int l;           // 長さ（行数）
+    int l;            // 長さ（行数）
 
-    int in;          // 入力
+    int in;           // 入力
 
-    int pwr;         // 終了の可否
+    int pwr;          // 終了の可否
 } ctrl;
 
 //////////////////////////////////////////////////////////////////////
@@ -32,9 +28,9 @@ int fnew(ctrl *);     // 新規作成
 
 int menu(void);     　// コマンド表示と入力
 int show(ctrl);       // レコード表示
-int add(ctrl *);      // 引数未定 追加
-int renew(ctrl *);      // 引数未定 更新...updateでは
-int del(ctrl);       // 引数未定 削除 置き換え（notリユース）
+int add(ctrl *);      // 追加
+int renew(ctrl *);    // 更新
+int del(ctrl *);        // 削除（notリユース）
 
 //////////////////////////////////////////////////////////////////////
 
@@ -60,11 +56,11 @@ int main(void)
                 break;
 
             case 3:
-                renew(com);
+                renew(%com);
                 break;
 
             case 4:
-                del(com);
+                del(&com);
                 break;
             
             case 9:  
@@ -76,8 +72,6 @@ int main(void)
                 break;
         } printf("\n*********************\n\n");
     } while(com.pwr);
-
-    //remove("seiseki.txt");
 
     printf("プログラムを終了...\n");
     
@@ -96,7 +90,6 @@ int fnew(ctrl *con)
         fp = fopen("seiseki.txt", "w");
         freopen("seiseki.txt", "r", fp);
     } fseek(fp, 0, SEEK_SET);
-
     
     con->l = 0;
     while(fgetc(fp) != EOF)
@@ -193,27 +186,24 @@ int renew(ctrl *con)
     return 0;
 }
 
-int del(ctrl con)
+int del(ctrl *con)
 {
     FILE *fp = fopen("seiseki.txt", "r+");
-    int r;
-
+  
     if(!fp)
     {
         printf("[ERROR]: ファイルを開けません\n");
         return 1;
     } printf("[System]: レコード番号 -> ");
-    scanf("%d", &r);
+    scanf("%d", &con->in);
 
-    if(con.l < r)
+    if(con->l < con->in)
         printf("[ERROR]: 無効な番号\n");
     else
     {
-        fseek(fp, (r - 1) * 28L + 3L, SEEK_SET);
+        fseek(fp, (con->in - 1) * 28L + 3L, SEEK_SET);
         fprintf(fp, " [DELETED]          ");
     } fclose(fp);
 
     return 0;
 }
-
-///////////////////////////////////////////////////////////////////////////////
