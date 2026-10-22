@@ -195,13 +195,14 @@ int del(ctrl *con)
     } printf("[System]: レコード番号 -> ");
     scanf("%d", &con->in);
 
-    if(con->l < con->in)
-        printf("[ERROR]: 無効な番号\n");
-    else
+    if(con->in <= con->l)
     {
         fseek(fp, (con->in - 1) * 28L + 3L, SEEK_SET);
         fprintf(fp, " [DELETED]          ");
-    } fclose(fp);
+    } else
+        printf("[ERROR]: 無効な番号\n");
+
+    fclose(fp);
 
     return 0;
 }
