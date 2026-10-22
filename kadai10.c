@@ -11,22 +11,19 @@ typedef struct
 
 typedef struct
 {
-    greade rec;       // 成績
-
-    int l;            // 長さ（行数）
-
-    int in;           // 入力
-
-    int pwr;          // 終了の可否
+    greade rec;
+    int l;
+    int in;
+    int pwr;
 } ctrl;
 
-int fnew(ctrl *);     // 新規作成
+int fnew(ctrl *);
 
-int menu(void);     　// コマンド表示と入力
-int show(ctrl *);     // レコード表示
-int add(ctrl *);      // 追加
-int renew(ctrl *);    // 更新
-int del(ctrl *);      // 削除（notリユース）
+int menu(void);
+int show(ctrl *);
+int add(ctrl *);
+int renew(ctrl *);
+int del(ctrl *);
 
 int main(void)
 {
