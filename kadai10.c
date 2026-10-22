@@ -53,7 +53,7 @@ int main(void)
                 break;
 
             case 3:
-                renew(%com);
+                renew(&com);
                 break;
 
             case 4:
@@ -104,11 +104,11 @@ int menu(void)
     int id;
 
     printf("***** main menu *****\n");
-    printf("1.list\n");
-    printf("2.add\n");
-    printf("3.update\n");
-    printf("4.delete\n");
-    printf("9.end\n");
+    printf("1.表示\n");
+    printf("2.追加\n");
+    printf("3.更新\n");
+    printf("4.削除\n");
+    printf("9.終了\n");
 
     printf("\n[System]: コマンド -> ");
     scanf("%d", &id);
