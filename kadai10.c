@@ -45,7 +45,7 @@ int main(void)
         switch(com.in)
         {
             case 1:
-                show(com);
+                show(&com);
                 break;
             
             case 2:
